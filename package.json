@@ -1,0 +1,24 @@
+{
+  "name": "free-trading-scanner-api",
+  "version": "1.0.0",
+  "description": "Free live trading scanner with CoinGecko and Yahoo Finance APIs",
+  "main": "fetch-data.js",
+  "scripts": {
+    "start": "node fetch-data.js",
+    "test": "node fetch-data.js"
+  },
+  "dependencies": {
+    "axios": "^1.6.2"
+  },
+  "keywords": [
+    "trading",
+    "cryptocurrency",
+    "stocks",
+    "free",
+    "api",
+    "coingecko",
+    "yahoo-finance"
+  ],
+  "author": "Your Name",
+  "license": "MIT"
+}
