@@ -10,6 +10,7 @@ const fs = require('fs');
 const CONFIG = {
   COINGECKO_BASE: 'https://api.coingecko.com/api/v3',
   YAHOO_BASE: 'https://query1.finance.yahoo.com/v8/finance/chart',
+  YAHOO_SCREENER: 'https://query1.finance.yahoo.com/v1/finance/screener',
   MAX_CRYPTO_RESULTS: 20,
   MAX_STOCK_RESULTS: 15,
   MIN_CRYPTO_VOLUME: 10000000, // $10M minimum volume
@@ -68,7 +69,7 @@ async function fetchCryptoData() {
       params: {
         vs_currency: 'usd',
         order: 'volume_desc', // Order by volume for better liquidity
-        per_page: 50,
+        per_page: 100, // Increased to get more live options
         page: 1,
         sparkline: true,
         price_change_percentage: '1h,24h,7d'
@@ -161,8 +162,8 @@ async function fetchCryptoData() {
         else if (Math.abs(change24h) > 20) catalyst = 'Major Event';
         else if (volume24h > 500000000) catalyst = 'High Volume Activity';
         
-        // Create result object
-        const result = {
+        // Create crypto result object (renamed from 'result' to avoid conflict)
+        const cryptoData = {
           id: `${coin.id}_${Date.now()}`,
           coin: coin.symbol.toUpperCase(),
           symbol: `${coin.symbol.toUpperCase()}USDT`,
@@ -193,7 +194,7 @@ async function fetchCryptoData() {
           image: coin.image
         };
         
-        cryptoResults.push(result);
+        cryptoResults.push(cryptoData);
         
         console.log(`✅ ${coin.symbol.toUpperCase()}: $${currentPrice.toFixed(6)}, ${change24h.toFixed(1)}%, Vol: $${(volume24h/1000000).toFixed(1)}M, Score: ${aiScore.toFixed(1)}`);
         
@@ -229,26 +230,116 @@ async function fetchCryptoData() {
   }
 }
 
-// Fetch stock data from Yahoo Finance
-async function fetchStockData() {
+// Fetch live stock gainers and losers
+async function fetchLiveStockMovers() {
   try {
-    console.log('📈 Fetching stock data from Yahoo Finance...');
+    console.log('📈 Fetching live stock movers...');
     
-    // Top stocks to monitor - mix of growth, tech, and volatile stocks
-    const stockSymbols = [
-      // Tech Giants
-      'NVDA', 'TSLA', 'AAPL', 'MSFT', 'GOOGL', 'META', 'AMZN', 'NFLX',
-      // Semiconductors
-      'AMD', 'AVGO', 'QCOM', 'MU',
-      // Growth/Speculative  
-      'PLTR', 'COIN', 'HOOD', 'RIVN', 'LCID',
-      // ETFs for broader market
-      'SPY', 'QQQ', 'IWM'
+    // Multiple endpoints to get diverse live data
+    const screenerQueries = [
+      // Top gainers by percent
+      {
+        "offset": 0,
+        "size": 25,
+        "sortField": "percentchange",
+        "sortType": "DESC",
+        "quoteType": "EQUITY",
+        "query": {
+          "operator": "AND",
+          "operands": [
+            {"operator": "GT", "operands": ["percentchange", 2]},
+            {"operator": "GT", "operands": ["dayvolume", 100000]},
+            {"operator": "GT", "operands": ["intradayprice", 1]}
+          ]
+        },
+        "userId": "",
+        "userIdType": "guid"
+      },
+      // Top volume
+      {
+        "offset": 0,
+        "size": 25,
+        "sortField": "dayvolume",
+        "sortType": "DESC",
+        "quoteType": "EQUITY",
+        "query": {
+          "operator": "AND",
+          "operands": [
+            {"operator": "GT", "operands": ["dayvolume", 1000000]},
+            {"operator": "GT", "operands": ["intradayprice", 0.5]}
+          ]
+        },
+        "userId": "",
+        "userIdType": "guid"
+      }
     ];
     
-    const stockResults = [];
+    let allStocks = [];
     
-    for (const symbol of stockSymbols) {
+    for (const query of screenerQueries) {
+      try {
+        const response = await axios.post(`${CONFIG.YAHOO_SCREENER}`, query, {
+          headers: {
+            'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36',
+            'Content-Type': 'application/json'
+          },
+          timeout: 10000
+        });
+        
+        const stocks = response.data?.finance?.result?.[0]?.quotes || [];
+        allStocks = [...allStocks, ...stocks];
+        console.log(`📊 Found ${stocks.length} stocks from screener`);
+        
+      } catch (error) {
+        console.warn('⚠️ Screener query failed:', error.message);
+      }
+    }
+    
+    // Remove duplicates
+    const uniqueStocks = allStocks.filter((stock, index, self) => 
+      index === self.findIndex(s => s.symbol === stock.symbol)
+    );
+    
+    console.log(`📈 Processing ${uniqueStocks.length} unique live stocks`);
+    return uniqueStocks;
+    
+  } catch (error) {
+    console.error('❌ Stock screener error:', error.message);
+    return [];
+  }
+}
+
+// Fetch stock data from Yahoo Finance using live data
+async function fetchStockData() {
+  try {
+    console.log('📈 Fetching live stock data from Yahoo Finance...');
+    
+    // Get live moving stocks instead of predefined list
+    const liveStocks = await fetchLiveStockMovers();
+    
+    if (liveStocks.length === 0) {
+      console.warn('⚠️ No live stocks found, using fallback method');
+      // Fallback: Get trending tickers from Yahoo
+      const trendingResponse = await axios.get('https://query1.finance.yahoo.com/v1/finance/trending/US', {
+        headers: {
+          'User-Agent': 'Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36'
+        },
+        timeout: 8000
+      });
+      
+      const trendingQuotes = trendingResponse.data?.finance?.result?.[0]?.quotes || [];
+      liveStocks.push(...trendingQuotes.map(q => ({ symbol: q.symbol })));
+    }
+    
+    const stockResults = [];
+    const processedSymbols = new Set(); // Avoid duplicates
+    
+    for (const stockInfo of liveStocks.slice(0, 50)) { // Process up to 50 stocks
+      const symbol = stockInfo.symbol;
+      
+      if (!symbol || processedSymbols.has(symbol)) continue;
+      processedSymbols.add(symbol);
+      
       try {
         console.log(`📊 Fetching ${symbol}...`);
         
@@ -264,13 +355,13 @@ async function fetchStockData() {
           timeout: 8000
         });
         
-        const result = response.data.chart?.result?.[0];
-        if (!result || !result.meta) {
+        const chartResult = response.data.chart?.result?.[0];
+        if (!chartResult || !chartResult.meta) {
           console.warn(`⚠️ No data returned for ${symbol}`);
           continue;
         }
         
-        const meta = result.meta;
+        const meta = chartResult.meta;
         const currentPrice = meta.regularMarketPrice || meta.previousClose;
         const previousClose = meta.previousClose;
         const currentVolume = meta.regularMarketVolume || 0;
@@ -286,8 +377,8 @@ async function fetchStockData() {
         const change24h = previousClose ? ((currentPrice - previousClose) / previousClose) * 100 : 0;
         
         // Get intraday data for technical analysis
-        const quote = result.indicators?.quote?.[0];
-        const timestamps = result.timestamp || [];
+        const quote = chartResult.indicators?.quote?.[0];
+        const timestamps = chartResult.timestamp || [];
         const closes = quote?.close?.filter(Boolean) || [currentPrice];
         const highs = quote?.high?.filter(Boolean) || [currentPrice];
         const lows = quote?.low?.filter(Boolean) || [currentPrice];
@@ -346,24 +437,14 @@ async function fetchStockData() {
         if (rvol > 4.0 && Math.abs(change24h) > 8) momentum = 'Very Strong';
         else if (rvol > 2.5 && Math.abs(change24h) > 4) momentum = 'Strong';
         
-        // Sector classification
-        const sectors = {
-          'NVDA': 'AI/Semiconductors', 'AMD': 'Semiconductors', 'AVGO': 'Semiconductors',
-          'QCOM': 'Semiconductors', 'MU': 'Memory',
-          'TSLA': 'EV/Auto', 'RIVN': 'EV/Auto', 'LCID': 'EV/Auto',
-          'AAPL': 'Consumer Tech', 'MSFT': 'Cloud/Software', 'GOOGL': 'Tech/AI',
-          'META': 'Social Media', 'AMZN': 'E-commerce/Cloud', 'NFLX': 'Streaming',
-          'PLTR': 'Data Analytics', 'COIN': 'Crypto Exchange', 'HOOD': 'Fintech',
-          'SPY': 'S&P 500 ETF', 'QQQ': 'NASDAQ ETF', 'IWM': 'Small Cap ETF'
-        };
-        
         // Determine catalyst
         let catalyst = 'Market Movement';
         if (Math.abs(change1h) > 3) catalyst = 'Intraday Momentum';
         else if (rvol > 4) catalyst = 'Volume Surge';
         else if (Math.abs(change24h) > 10) catalyst = 'Major Move';
         
-        const result = {
+        // Create stock result object (renamed from 'result' to avoid conflict)
+        const stockData = {
           id: `${symbol}_${Date.now()}`,
           symbol: symbol,
           name: meta.longName || symbol,
@@ -381,7 +462,7 @@ async function fetchStockData() {
           aiScore: parseFloat(aiScore.toFixed(1)),
           momentum: momentum,
           isPennyStock: isPennyStock,
-          sector: sectors[symbol] || 'Other',
+          sector: 'Live Market Data',
           catalyst: catalyst,
           pumpCheck: rvol > 5.0 ? 'High Volume Caution' : 'Clean',
           stopLoss: currentPrice * (isPennyStock ? 0.85 : 0.92), // Wider stops for penny stocks
@@ -391,12 +472,12 @@ async function fetchStockData() {
           dataSource: '🆓 FREE Yahoo Finance API'
         };
         
-        stockResults.push(result);
+        stockResults.push(stockData);
         
         console.log(`✅ ${symbol}: $${currentPrice.toFixed(2)}, ${change24h.toFixed(1)}%, Vol: ${(currentVolume/1000000).toFixed(1)}M, Score: ${aiScore.toFixed(1)}`);
         
         // Small delay to avoid rate limiting
-        await new Promise(resolve => setTimeout(resolve, 200));
+        await new Promise(resolve => setTimeout(resolve, 300));
         
       } catch (error) {
         console.warn(`⚠️ Error fetching ${symbol}:`, error.message);
@@ -408,14 +489,14 @@ async function fetchStockData() {
       .sort((a, b) => b.aiScore - a.aiScore)
       .slice(0, CONFIG.MAX_STOCK_RESULTS);
     
-    console.log(`🎯 Selected ${finalStockData.length} top stock signals`);
+    console.log(`🎯 Selected ${finalStockData.length} top stock signals from live data`);
     
     return {
       success: true,
       count: finalStockData.length,
       data: finalStockData,
       timestamp: new Date().toISOString(),
-      source: 'Yahoo Finance API + GitHub Actions'
+      source: 'Yahoo Finance Live Screener + GitHub Actions'
     };
     
   } catch (error) {
