@@ -3,73 +3,721 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🆓 Free Trading Scanner API</title>
-    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
-</head>
-<body class="bg-gray-100 min-h-screen">
-    <div class="container mx-auto px-4 py-8">
-        <div class="bg-white rounded-lg shadow-lg p-8 mb-8">
-            <div class="text-center mb-8">
-                <h1 class="text-4xl font-bold text-gray-800 mb-2">
-                    🆓 Free Trading Scanner API
-                </h1>
-                <p class="text-xl text-green-600 font-semibold">
-                    ✅ 100% Free • No Limits • Updated Every 10 Minutes
-                </p>
-                <p class="text-gray-600 mt-2">
-                    Live cryptocurrency data from CoinGecko • Live stock data from Yahoo Finance
-                </p>
-            </div>
+    <title>Live Trading Scanner | Real-Time Market Signals</title>
+    <link href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css" rel="stylesheet">
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
 
-            <div class="grid md:grid-cols-2 gap-8 mb-8">
-                <div class="bg-blue-50 rounded-lg p-6">
-                    <h2 class="text-2xl font-bold text-blue-800 mb-4">📊 API Endpoints</h2>
-                    
-                    <div class="space-y-4">
-                        <div class="bg-white rounded p-4">
-                            <h3 class="font-semibold text-gray-800">🪙 Crypto Data</h3>
-                            <a href="data/crypto.json" class="text-blue-600 hover:text-blue-800 text-sm break-all">
-                                /data/crypto.json
-                            </a>
-                            <p class="text-gray-600 text-sm mt-1">Live cryptocurrency data from CoinGecko API</p>
-                        </div>
-                        
-                        <div class="bg-white rounded p-4">
-                            <h3 class="font-semibold text-gray-800">📈 Stock Data</h3>
-                            <a href="data/stocks.json" class="text-blue-600 hover:text-blue-800 text-sm break-all">
-                                /data/stocks.json
-                            </a>
-                            <p class="text-gray-600 text-sm mt-1">Live stock data from Yahoo Finance API</p>
-                        </div>
-                        
-                        <div class="bg-white rounded p-4">
-                            <h3 class="font-semibold text-gray-800">📊 Status</h3>
-                            <a href="data/status.json" class="text-blue-600 hover:text-blue-800 text-sm break-all">
-                                /data/status.json
-                            </a>
-                            <p class="text-gray-600 text-sm mt-1">API status and last update timestamp</p>
-                        </div>
+        body {
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+            background: linear-gradient(135deg, #0f1419 0%, #1a1f2e 100%);
+            color: #e1e8f0;
+            min-height: 100vh;
+            line-height: 1.6;
+        }
+
+        .header {
+            background: linear-gradient(135deg, #1e2738 0%, #2a3441 100%);
+            padding: 20px 0;
+            border-bottom: 2px solid #00d4aa;
+            box-shadow: 0 4px 20px rgba(0, 212, 170, 0.2);
+        }
+
+        .container {
+            max-width: 1400px;
+            margin: 0 auto;
+            padding: 0 20px;
+        }
+
+        .header-content {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            flex-wrap: wrap;
+            gap: 20px;
+        }
+
+        .logo {
+            display: flex;
+            align-items: center;
+            gap: 15px;
+        }
+
+        .logo i {
+            font-size: 2.5rem;
+            color: #00d4aa;
+            animation: pulse 2s infinite;
+        }
+
+        @keyframes pulse {
+            0%, 100% { opacity: 1; }
+            50% { opacity: 0.7; }
+        }
+
+        .logo h1 {
+            font-size: 2rem;
+            font-weight: 700;
+            background: linear-gradient(135deg, #00d4aa 0%, #00a8cc 100%);
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+            background-clip: text;
+        }
+
+        .status-bar {
+            display: flex;
+            align-items: center;
+            gap: 20px;
+            flex-wrap: wrap;
+        }
+
+        .status-item {
+            display: flex;
+            align-items: center;
+            gap: 8px;
+            padding: 8px 16px;
+            background: rgba(0, 212, 170, 0.1);
+            border-radius: 20px;
+            border: 1px solid rgba(0, 212, 170, 0.3);
+        }
+
+        .status-online {
+            color: #00d4aa;
+        }
+
+        .status-offline {
+            color: #ff6b6b;
+        }
+
+        .main-content {
+            padding: 30px 0;
+        }
+
+        .section {
+            margin-bottom: 40px;
+        }
+
+        .section-header {
+            display: flex;
+            justify-content: between;
+            align-items: center;
+            margin-bottom: 25px;
+            flex-wrap: wrap;
+            gap: 15px;
+        }
+
+        .section-title {
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: #e1e8f0;
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .section-title i {
+            color: #00d4aa;
+        }
+
+        .refresh-btn {
+            background: linear-gradient(135deg, #00d4aa 0%, #00a8cc 100%);
+            border: none;
+            color: white;
+            padding: 10px 20px;
+            border-radius: 25px;
+            cursor: pointer;
+            font-weight: 600;
+            transition: all 0.3s ease;
+            display: flex;
+            align-items: center;
+            gap: 8px;
+        }
+
+        .refresh-btn:hover {
+            transform: translateY(-2px);
+            box-shadow: 0 8px 25px rgba(0, 212, 170, 0.3);
+        }
+
+        .cards-grid {
+            display: grid;
+            grid-template-columns: repeat(auto-fill, minmax(380px, 1fr));
+            gap: 25px;
+        }
+
+        .signal-card {
+            background: linear-gradient(135deg, #1e2738 0%, #2a3441 100%);
+            border-radius: 16px;
+            padding: 25px;
+            border: 1px solid rgba(0, 212, 170, 0.2);
+            transition: all 0.3s ease;
+            position: relative;
+            overflow: hidden;
+        }
+
+        .signal-card::before {
+            content: '';
+            position: absolute;
+            top: 0;
+            left: 0;
+            width: 100%;
+            height: 3px;
+            background: linear-gradient(135deg, #00d4aa 0%, #00a8cc 100%);
+        }
+
+        .signal-card:hover {
+            transform: translateY(-5px);
+            box-shadow: 0 15px 40px rgba(0, 212, 170, 0.2);
+            border-color: rgba(0, 212, 170, 0.4);
+        }
+
+        .card-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: flex-start;
+            margin-bottom: 20px;
+        }
+
+        .symbol-info {
+            display: flex;
+            align-items: center;
+            gap: 12px;
+        }
+
+        .symbol-name {
+            font-size: 1.4rem;
+            font-weight: 700;
+            color: #e1e8f0;
+        }
+
+        .coin-image {
+            width: 32px;
+            height: 32px;
+            border-radius: 50%;
+        }
+
+        .ai-score {
+            background: linear-gradient(135deg, #ff6b6b 0%, #ffa726 50%, #00d4aa 100%);
+            color: white;
+            padding: 6px 14px;
+            border-radius: 20px;
+            font-weight: 700;
+            font-size: 0.9rem;
+        }
+
+        .price-info {
+            margin-bottom: 20px;
+        }
+
+        .current-price {
+            font-size: 2rem;
+            font-weight: 700;
+            color: #e1e8f0;
+            margin-bottom: 8px;
+        }
+
+        .price-changes {
+            display: flex;
+            gap: 15px;
+            flex-wrap: wrap;
+        }
+
+        .price-change {
+            padding: 4px 12px;
+            border-radius: 12px;
+            font-weight: 600;
+            font-size: 0.85rem;
+        }
+
+        .positive {
+            background: rgba(0, 212, 170, 0.2);
+            color: #00d4aa;
+        }
+
+        .negative {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+        }
+
+        .metrics-grid {
+            display: grid;
+            grid-template-columns: repeat(2, 1fr);
+            gap: 15px;
+            margin-bottom: 20px;
+        }
+
+        .metric {
+            text-align: center;
+            padding: 12px;
+            background: rgba(0, 212, 170, 0.05);
+            border-radius: 8px;
+            border: 1px solid rgba(0, 212, 170, 0.1);
+        }
+
+        .metric-label {
+            font-size: 0.8rem;
+            color: #8892b0;
+            margin-bottom: 4px;
+        }
+
+        .metric-value {
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: #e1e8f0;
+        }
+
+        .card-footer {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            padding-top: 15px;
+            border-top: 1px solid rgba(0, 212, 170, 0.1);
+        }
+
+        .momentum-badge {
+            padding: 6px 14px;
+            border-radius: 15px;
+            font-size: 0.8rem;
+            font-weight: 600;
+        }
+
+        .momentum-strong {
+            background: rgba(0, 212, 170, 0.2);
+            color: #00d4aa;
+        }
+
+        .momentum-moderate {
+            background: rgba(255, 167, 38, 0.2);
+            color: #ffa726;
+        }
+
+        .momentum-weak {
+            background: rgba(255, 107, 107, 0.2);
+            color: #ff6b6b;
+        }
+
+        .last-updated {
+            font-size: 0.7rem;
+            color: #8892b0;
+        }
+
+        .loading {
+            text-align: center;
+            padding: 40px;
+            font-size: 1.2rem;
+            color: #8892b0;
+        }
+
+        .error {
+            text-align: center;
+            padding: 40px;
+            color: #ff6b6b;
+            background: rgba(255, 107, 107, 0.1);
+            border-radius: 12px;
+            border: 1px solid rgba(255, 107, 107, 0.2);
+        }
+
+        .empty-state {
+            text-align: center;
+            padding: 60px 20px;
+            color: #8892b0;
+        }
+
+        .empty-state i {
+            font-size: 4rem;
+            margin-bottom: 20px;
+            color: #4a5568;
+        }
+
+        @media (max-width: 768px) {
+            .cards-grid {
+                grid-template-columns: 1fr;
+            }
+            
+            .header-content {
+                flex-direction: column;
+                text-align: center;
+            }
+            
+            .logo h1 {
+                font-size: 1.5rem;
+            }
+            
+            .status-bar {
+                justify-content: center;
+            }
+        }
+
+        .footer {
+            background: #1e2738;
+            padding: 30px 0;
+            margin-top: 60px;
+            border-top: 1px solid rgba(0, 212, 170, 0.2);
+        }
+
+        .footer-content {
+            text-align: center;
+            color: #8892b0;
+        }
+
+        .footer-links {
+            margin-bottom: 15px;
+        }
+
+        .footer-links a {
+            color: #00d4aa;
+            text-decoration: none;
+            margin: 0 15px;
+            transition: color 0.3s ease;
+        }
+
+        .footer-links a:hover {
+            color: #00a8cc;
+        }
+    </style>
+</head>
+<body>
+    <header class="header">
+        <div class="container">
+            <div class="header-content">
+                <div class="logo">
+                    <i class="fas fa-chart-line"></i>
+                    <h1>Live Trading Scanner</h1>
+                </div>
+                <div class="status-bar">
+                    <div class="status-item">
+                        <i class="fas fa-circle status-indicator" id="cryptoStatus"></i>
+                        <span>Crypto: <span id="cryptoCount">0</span></span>
+                    </div>
+                    <div class="status-item">
+                        <i class="fas fa-circle status-indicator" id="stockStatus"></i>
+                        <span>Stocks: <span id="stockCount">0</span></span>
+                    </div>
+                    <div class="status-item">
+                        <i class="fas fa-clock"></i>
+                        <span id="lastUpdate">Loading...</span>
                     </div>
                 </div>
+            </div>
+        </div>
+    </header>
 
-                <div class="bg-green-50 rounded-lg p-6">
-                    <h2 class="text-2xl font-bold text-green-800 mb-4">🔄 Features</h2>
+    <main class="main-content">
+        <div class="container">
+            <!-- Crypto Section -->
+            <section class="section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fab fa-bitcoin"></i>
+                        Cryptocurrency Signals
+                    </h2>
+                    <button class="refresh-btn" onclick="loadData()">
+                        <i class="fas fa-sync-alt"></i>
+                        Refresh Data
+                    </button>
+                </div>
+                <div id="cryptoContainer">
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        Loading cryptocurrency data...
+                    </div>
+                </div>
+            </section>
+
+            <!-- Stocks Section -->
+            <section class="section">
+                <div class="section-header">
+                    <h2 class="section-title">
+                        <i class="fas fa-chart-bar"></i>
+                        Stock Signals
+                    </h2>
+                </div>
+                <div id="stockContainer">
+                    <div class="loading">
+                        <i class="fas fa-spinner fa-spin"></i>
+                        Loading stock data...
+                    </div>
+                </div>
+            </section>
+        </div>
+    </main>
+
+    <footer class="footer">
+        <div class="container">
+            <div class="footer-content">
+                <div class="footer-links">
+                    <a href="https://github.com/libranxp/trading-scanner" target="_blank">
+                        <i class="fab fa-github"></i> GitHub
+                    </a>
+                    <a href="data/crypto.json" target="_blank">
+                        <i class="fas fa-download"></i> Crypto JSON
+                    </a>
+                    <a href="data/stocks.json" target="_blank">
+                        <i class="fas fa-download"></i> Stocks JSON
+                    </a>
+                </div>
+                <p>&copy; 2024 Live Trading Scanner. Data provided by CoinGecko & Yahoo Finance APIs.</p>
+                <p><small>🚨 Not financial advice. Always DYOR before trading.</small></p>
+            </div>
+        </div>
+    </footer>
+
+    <script>
+        // Global state
+        let cryptoData = [];
+        let stockData = [];
+        let lastUpdateTime = null;
+
+        // Load data on page load
+        document.addEventListener('DOMContentLoaded', function() {
+            loadData();
+            // Auto-refresh every 5 minutes
+            setInterval(loadData, 5 * 60 * 1000);
+        });
+
+        async function loadData() {
+            try {
+                console.log('Loading trading data...');
+                
+                // Update refresh button
+                const refreshBtn = document.querySelector('.refresh-btn');
+                refreshBtn.innerHTML = '<i class="fas fa-spinner fa-spin"></i> Updating...';
+                
+                // Load crypto and stock data in parallel
+                const [cryptoResponse, stockResponse] = await Promise.all([
+                    fetch('data/crypto.json').catch(e => ({ ok: false, error: e })),
+                    fetch('data/stocks.json').catch(e => ({ ok: false, error: e }))
+                ]);
+
+                // Process crypto data
+                if (cryptoResponse.ok) {
+                    const cryptoResult = await cryptoResponse.json();
+                    cryptoData = cryptoResult.data || [];
+                    document.getElementById('cryptoStatus').className = 'fas fa-circle status-online';
+                    document.getElementById('cryptoCount').textContent = cryptoData.length;
+                    renderCryptoData();
+                } else {
+                    document.getElementById('cryptoStatus').className = 'fas fa-circle status-offline';
+                    document.getElementById('cryptoContainer').innerHTML = 
+                        '<div class="error"><i class="fas fa-exclamation-triangle"></i> Failed to load crypto data</div>';
+                }
+
+                // Process stock data
+                if (stockResponse.ok) {
+                    const stockResult = await stockResponse.json();
+                    stockData = stockResult.data || [];
+                    document.getElementById('stockStatus').className = 'fas fa-circle status-online';
+                    document.getElementById('stockCount').textContent = stockData.length;
+                    renderStockData();
+                } else {
+                    document.getElementById('stockStatus').className = 'fas fa-circle status-offline';
+                    document.getElementById('stockContainer').innerHTML = 
+                        '<div class="error"><i class="fas fa-exclamation-triangle"></i> Failed to load stock data</div>';
+                }
+
+                // Update last update time
+                lastUpdateTime = new Date();
+                document.getElementById('lastUpdate').textContent = 
+                    'Updated: ' + lastUpdateTime.toLocaleTimeString();
+
+                // Reset refresh button
+                refreshBtn.innerHTML = '<i class="fas fa-sync-alt"></i> Refresh Data';
+
+            } catch (error) {
+                console.error('Error loading data:', error);
+                document.getElementById('cryptoContainer').innerHTML = 
+                    '<div class="error"><i class="fas fa-exclamation-triangle"></i> Network error loading data</div>';
+                document.getElementById('stockContainer').innerHTML = 
+                    '<div class="error"><i class="fas fa-exclamation-triangle"></i> Network error loading data</div>';
+            }
+        }
+
+        function renderCryptoData() {
+            const container = document.getElementById('cryptoContainer');
+            
+            if (!cryptoData || cryptoData.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fab fa-bitcoin"></i>
+                        <h3>No crypto signals available</h3>
+                        <p>Waiting for market data updates...</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const cardsHtml = cryptoData.map(crypto => createCryptoCard(crypto)).join('');
+            container.innerHTML = `<div class="cards-grid">${cardsHtml}</div>`;
+        }
+
+        function renderStockData() {
+            const container = document.getElementById('stockContainer');
+            
+            if (!stockData || stockData.length === 0) {
+                container.innerHTML = `
+                    <div class="empty-state">
+                        <i class="fas fa-chart-bar"></i>
+                        <h3>No stock signals available</h3>
+                        <p>Waiting for market data updates...</p>
+                    </div>
+                `;
+                return;
+            }
+
+            const cardsHtml = stockData.map(stock => createStockCard(stock)).join('');
+            container.innerHTML = `<div class="cards-grid">${cardsHtml}</div>`;
+        }
+
+        function createCryptoCard(crypto) {
+            const change1hClass = crypto.change1h >= 0 ? 'positive' : 'negative';
+            const change24hClass = crypto.change24h >= 0 ? 'positive' : 'negative';
+            const change7dClass = crypto.change7d >= 0 ? 'positive' : 'negative';
+            
+            const momentumClass = crypto.momentum === 'Very Strong' ? 'momentum-strong' :
+                                crypto.momentum === 'Strong' ? 'momentum-strong' : 'momentum-moderate';
+
+            const aiScoreColor = crypto.aiScore >= 8 ? '#00d4aa' : 
+                               crypto.aiScore >= 7 ? '#ffa726' : '#ff6b6b';
+
+            return `
+                <div class="signal-card">
+                    <div class="card-header">
+                        <div class="symbol-info">
+                            ${crypto.image ? `<img src="${crypto.image}" alt="${crypto.coin}" class="coin-image">` : ''}
+                            <div>
+                                <div class="symbol-name">${crypto.coin}</div>
+                                <div style="font-size: 0.9rem; color: #8892b0;">${crypto.name}</div>
+                            </div>
+                        </div>
+                        <div class="ai-score" style="background: ${aiScoreColor};">
+                            ${crypto.aiScore}/10
+                        </div>
+                    </div>
                     
-                    <div class="space-y-3">
-                        <div class="flex items-center">
-                            <span class="text-green-600 mr-2">✅</span>
-                            <span>Auto-updates every 10 minutes</span>
+                    <div class="price-info">
+                        <div class="current-price">$${formatPrice(crypto.price)}</div>
+                        <div class="price-changes">
+                            <span class="price-change ${change1hClass}">1h: ${crypto.change1h.toFixed(2)}%</span>
+                            <span class="price-change ${change24hClass}">24h: ${crypto.change24h.toFixed(2)}%</span>
+                            <span class="price-change ${change7dClass}">7d: ${crypto.change7d.toFixed(2)}%</span>
                         </div>
-                        <div class="flex items-center">
-                            <span class="text-green-600 mr-2">✅</span>
-                            <span>CoinGecko + Yahoo Finance APIs</span>
+                    </div>
+                    
+                    <div class="metrics-grid">
+                        <div class="metric">
+                            <div class="metric-label">Volume 24h</div>
+                            <div class="metric-value">$${formatVolume(crypto.volume24h)}</div>
                         </div>
-                        <div class="flex items-center">
-                            <span class="text-green-600 mr-2">✅</span>
-                            <span>AI-powered signal scoring</span>
+                        <div class="metric">
+                            <div class="metric-label">Market Cap</div>
+                            <div class="metric-value">$${formatVolume(crypto.marketCap)}</div>
                         </div>
-                        <div class="flex items-center">
-                            <span class="text-green-600 mr-2">✅</span>
-                            <span>Technical analysis (RSI, ATR)</span>
+                        <div class="metric">
+                            <div class="metric-label">RSI</div>
+                            <div class="metric-value">${crypto.rsi}</div>
                         </div>
-                        <div class="flex
+                        <div class="metric">
+                            <div class="metric-label">ATR %</div>
+                            <div class="metric-value">${crypto.atr}%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer">
+                        <span class="momentum-badge ${momentumClass}">${crypto.momentum}</span>
+                        <span class="last-updated">${formatTime(crypto.lastUpdated)}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function createStockCard(stock) {
+            const change1hClass = stock.change1h >= 0 ? 'positive' : 'negative';
+            const change24hClass = stock.change24h >= 0 ? 'positive' : 'negative';
+            
+            const momentumClass = stock.momentum === 'Very Strong' ? 'momentum-strong' :
+                                stock.momentum === 'Strong' ? 'momentum-strong' : 'momentum-moderate';
+
+            const aiScoreColor = stock.aiScore >= 8 ? '#00d4aa' : 
+                               stock.aiScore >= 7 ? '#ffa726' : '#ff6b6b';
+
+            return `
+                <div class="signal-card">
+                    <div class="card-header">
+                        <div class="symbol-info">
+                            <div>
+                                <div class="symbol-name">${stock.symbol}</div>
+                                <div style="font-size: 0.9rem; color: #8892b0;">${stock.name}</div>
+                                ${stock.isPennyStock ? '<div style="font-size: 0.8rem; color: #ffa726;">💎 Penny Stock</div>' : ''}
+                            </div>
+                        </div>
+                        <div class="ai-score" style="background: ${aiScoreColor};">
+                            ${stock.aiScore}/10
+                        </div>
+                    </div>
+                    
+                    <div class="price-info">
+                        <div class="current-price">$${stock.price.toFixed(2)}</div>
+                        <div class="price-changes">
+                            <span class="price-change ${change1hClass}">1h: ${stock.change1h.toFixed(2)}%</span>
+                            <span class="price-change ${change24hClass}">24h: ${stock.change24h.toFixed(2)}%</span>
+                            <span class="price-change">Gap: ${stock.gap.toFixed(2)}%</span>
+                        </div>
+                    </div>
+                    
+                    <div class="metrics-grid">
+                        <div class="metric">
+                            <div class="metric-label">Volume</div>
+                            <div class="metric-value">${formatVolume(stock.volume)}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">RVOL</div>
+                            <div class="metric-value">${stock.rvol}x</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">RSI</div>
+                            <div class="metric-value">${stock.rsi}</div>
+                        </div>
+                        <div class="metric">
+                            <div class="metric-label">ATR %</div>
+                            <div class="metric-value">${stock.atr}%</div>
+                        </div>
+                    </div>
+                    
+                    <div class="card-footer">
+                        <span class="momentum-badge ${momentumClass}">${stock.momentum}</span>
+                        <span class="last-updated">${formatTime(stock.lastUpdated)}</span>
+                    </div>
+                </div>
+            `;
+        }
+
+        function formatPrice(price) {
+            if (price < 0.01) return price.toFixed(6);
+            if (price < 1) return price.toFixed(4);
+            if (price < 100) return price.toFixed(2);
+            return price.toFixed(0);
+        }
+
+        function formatVolume(volume) {
+            if (volume >= 1000000000) return (volume / 1000000000).toFixed(1) + 'B';
+            if (volume >= 1000000) return (volume / 1000000).toFixed(1) + 'M';
+            if (volume >= 1000) return (volume / 1000).toFixed(1) + 'K';
+            return volume.toString();
+        }
+
+        function formatTime(timestamp) {
+            return new Date(timestamp).toLocaleTimeString();
+        }
+
+        // Add keyboard shortcuts
+        document.addEventListener('keydown', function(event) {
+            if (event.key === 'r' && (event.ctrlKey || event.metaKey)) {
+                event.preventDefault();
+                loadData();
+            }
+        });
+    </script>
+</body>
+</html>
