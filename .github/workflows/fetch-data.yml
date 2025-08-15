@@ -1,0 +1,205 @@
+name: 🚀 Live Trading Scanner Data Fetch
+
+on:
+  schedule:
+    # Run every 10 minutes during market hours (9 AM - 4 PM UTC, Mon-Fri)
+    - cron: '*/10 9-16 * * 1-5'
+    # Run every 30 minutes outside market hours
+    - cron: '*/30 0-8,17-23 * * 1-5'
+    # Run hourly on weekends
+    - cron: '0 */1 * * 0,6'
+  
+  # Allow manual trigger
+  workflow_dispatch:
+    inputs:
+      force_run:
+        description: 'Force run regardless of schedule'
+        required: false
+        default: 'false'
+        type: boolean
+  
+  # Run on pushes to main branch
+  push:
+    branches: [ main ]
+    paths: 
+      - 'fetch-data.js'
+      - '.github/workflows/fetch-data.yml'
+
+# Set permissions for GitHub Pages deployment
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Allow only one concurrent deployment
+concurrency:
+  group: "pages"
+  cancel-in-progress: false
+
+jobs:
+  fetch-data:
+    runs-on: ubuntu-latest
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        token: ${{ secrets.GITHUB_TOKEN }}
+    
+    - name: 🔧 Setup Node.js
+      uses: actions/setup-node@v4
+      with:
+        node-version: '18'
+        cache: 'npm'
+    
+    - name: 📦 Install Dependencies
+      run: |
+        npm init -y
+        npm install axios
+        echo "✅ Dependencies installed"
+    
+    - name: 📊 Fetch Live Trading Data
+      run: |
+        echo "🚀 Starting live data fetch..."
+        echo "📅 Current time: $(date)"
+        echo "🌍 Timezone: $(date +%Z)"
+        
+        # Run the data fetcher
+        node fetch-data.js
+        
+        echo "✅ Data fetch completed"
+        
+        # Show generated files
+        echo "📁 Generated files:"
+        ls -la data/ || echo "No data directory found"
+        
+        # Show file sizes
+        if [ -d "data" ]; then
+          echo "📊 File sizes:"
+          du -sh data/*
+        fi
+    
+    - name: 📈 Validate Generated Data
+      run: |
+        echo "🔍 Validating generated data..."
+        
+        # Check if data files exist
+        if [ ! -f "data/crypto.json" ]; then
+          echo "⚠️ crypto.json not found"
+          exit 1
+        fi
+        
+        if [ ! -f "data/stocks.json" ]; then
+          echo "⚠️ stocks.json not found"
+          exit 1
+        fi
+        
+        # Validate JSON format
+        node -e "
+          try {
+            const crypto = require('./data/crypto.json');
+            const stocks = require('./data/stocks.json');
+            console.log('✅ Crypto signals:', crypto.count || 0);
+            console.log('✅ Stock signals:', stocks.count || 0);
+            console.log('✅ JSON validation passed');
+          } catch (e) {
+            console.error('❌ JSON validation failed:', e.message);
+            process.exit(1);
+          }
+        "
+    
+    - name: 🔄 Commit and Push Data
+      run: |
+        # Configure git
+        git config --local user.email "action@github.com"
+        git config --local user.name "GitHub Action"
+        
+        # Add generated files
+        git add data/
+        
+        # Check if there are changes
+        if git diff --staged --quiet; then
+          echo "📝 No changes to commit"
+        else
+          # Commit changes
+          TIMESTAMP=$(date -u '+%Y-%m-%d %H:%M:%S UTC')
+          git commit -m "🔄 Auto-update trading data - $TIMESTAMP
+          
+          📊 Live market data updated:
+          - CoinGecko crypto signals
+          - Yahoo Finance stock signals
+          - Generated: $TIMESTAMP
+          
+          🤖 Automated by GitHub Actions"
+          
+          # Push changes
+          git push
+          echo "✅ Changes committed and pushed"
+        fi
+    
+    - name: 📋 Generate Summary
+      run: |
+        echo "## 📊 Trading Scanner Update Summary" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**Timestamp:** $(date -u '+%Y-%m-%d %H:%M:%S UTC')" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        
+        # Read and display stats if status.json exists
+        if [ -f "data/status.json" ]; then
+          echo "### 📈 Signal Counts" >> $GITHUB_STEP_SUMMARY
+          node -e "
+            const status = require('./data/status.json');
+            console.log('- 🪙 **Crypto Signals:** ' + (status.cryptoSignals?.count || 0));
+            console.log('- 📈 **Stock Signals:** ' + (status.stockSignals?.count || 0));
+            console.log('- 📊 **Total Signals:** ' + (status.totalSignals || 0));
+            console.log('- ⏱️ **Execution Time:** ' + (status.executionTime || 'N/A'));
+            console.log('');
+            console.log('### 🔗 Links');
+            console.log('- 📱 **[Live Dashboard](https://libranxp.github.io/trading-scanner/)**');
+            console.log('- 🪙 **[Crypto Data](https://libranxp.github.io/trading-scanner/data/crypto.json)**');
+            console.log('- 📈 **[Stock Data](https://libranxp.github.io/trading-scanner/data/stocks.json)**');
+          " >> $GITHUB_STEP_SUMMARY
+        fi
+        
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "---" >> $GITHUB_STEP_SUMMARY
+        echo "*🤖 Automated by GitHub Actions | 📊 Data from CoinGecko & Yahoo Finance*" >> $GITHUB_STEP_SUMMARY
+
+  # Deploy to GitHub Pages
+  deploy-pages:
+    needs: fetch-data
+    runs-on: ubuntu-latest
+    
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    
+    steps:
+    - name: 📥 Checkout Repository
+      uses: actions/checkout@v4
+      with:
+        ref: main  # Get the latest changes
+    
+    - name: 🔧 Setup Pages
+      uses: actions/configure-pages@v4
+    
+    - name: 📤 Upload Artifact
+      uses: actions/upload-pages-artifact@v3
+      with:
+        path: '.'
+    
+    - name: 🚀 Deploy to GitHub Pages
+      id: deployment
+      uses: actions/deploy-pages@v4
+    
+    - name: 📋 Pages Summary
+      run: |
+        echo "## 🌐 GitHub Pages Deployment" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**🔗 Live Dashboard:** ${{ steps.deployment.outputs.page_url }}" >> $GITHUB_STEP_SUMMARY
+        echo "" >> $GITHUB_STEP_SUMMARY
+        echo "**📊 API Endpoints:**" >> $GITHUB_STEP_SUMMARY
+        echo "- [Crypto JSON](${{ steps.deployment.outputs.page_url }}data/crypto.json)" >> $GITHUB_STEP_SUMMARY
+        echo "- [Stock JSON](${{ steps.deployment.outputs.page_url }}data/stocks.json)" >> $GITHUB_STEP_SUMMARY
+        echo "- [Status JSON](${{ steps.deployment.outputs.page_url }}data/status.json)" >> $GITHUB_STEP_SUMMARY
+        echo "- [Health JSON](${{ steps.deployment.outputs.page_url }}data/health.json)" >> $GITHUB_STEP_SUMMARY
