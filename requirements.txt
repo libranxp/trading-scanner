@@ -1,0 +1,12 @@
+streamlit
+pandas
+pandas-ta
+requests
+scikit-learn
+xgboost
+python-telegram-bot
+pymongo
+tweepy
+newsapi-python
+yfinance
+alpha_vantage
