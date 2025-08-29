@@ -5,6 +5,6 @@ requests
 scikit-learn
 xgboost
 python-telegram-bot
-supabase-py
+supabase
 tweepy
 newsapi-python
