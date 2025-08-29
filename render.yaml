@@ -1,0 +1,11 @@
+services:
+  - type: web
+    name: stock-dashboard
+    env: python
+    buildCommand: pip install -r requirements.txt
+    startCommand: streamlit run dashboard_app.py
+
+cronJobs:
+  - name: stock-scan
+    schedule: "*/45 8-21 * * *"
+    command: python scanner.py
