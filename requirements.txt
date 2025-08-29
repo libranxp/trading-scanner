@@ -5,8 +5,6 @@ requests
 scikit-learn
 xgboost
 python-telegram-bot
-pymongo
+supabase-py
 tweepy
 newsapi-python
-yfinance
-alpha_vantage
